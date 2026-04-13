@@ -4,16 +4,36 @@
 
 ## ✨ 功能特性
 
-- **多渠道输出**：一次输入，自动生成 Discord（中英文）、Slack、官方渠道（iOS / Desktop / Android）等多种格式
-- **邮件 Newsletter**：AI 自动从更新内容中筛选 3-5 个亮点，生成完整的 HTML 邮件模板，可直接下载使用
-- **双格式输入支持**：兼容 Format A（按平台分类）和 Format B（按功能类型分类）两种原始文案格式
+- **多渠道输出**：一次输入，自动生成 Official（iOS / Desktop / Android）、Discord（英文 + 繁中）、Slack 等多种格式
+- **AI 精选亮点**：Discord 和 Slack 渠道由 AI 自动筛选最重要的功能亮点，生成简洁的公告内容
+- **双格式输入支持**：兼容按平台分类和按功能类型分类两种原始文案格式
 - **一键复制**：每个输出卡片支持一键复制，直接粘贴到对应渠道
 
 ## 🛠 技术栈
 
 - **框架**：Next.js（App Router）+ TypeScript
 - **UI**：Tailwind CSS
-- **AI**：OpenAI GPT-4o
+- **AI**：兼容 OpenAI API 格式的 LLM 服务
+
+## 🚀 快速开始
+
+1. 安装依赖：
+   ```bash
+   npm install
+   ```
+
+2. 配置环境变量，创建 `.env.local`：
+   ```
+   OPENAI_API_KEY=your_api_key
+   OPENAI_BASE_URL=https://your-proxy.com/v1
+   ```
+
+3. 启动开发服务器：
+   ```bash
+   npm run dev
+   ```
+
+4. 打开 `http://localhost:3000`
 
 ## 📥 输入格式示例
 
@@ -50,15 +70,14 @@ Improvements
 ```
 ├── app/
 │   ├── api/
-│   │   ├── generate/         # 解析原始文案并生成多渠道内容
-│   │   └── generate-email/   # 生成邮件 Newsletter HTML
+│   │   └── generate/         # 5 阶段 AI 处理（提取→润色→Discord 亮点→Slack 亮点→模板生成）
 │   └── page.tsx              # 主页面
 ├── components/
 │   ├── InputSection.tsx      # 输入区域
 │   ├── OutputCard.tsx        # 输出卡片（含复制功能）
-│   └── EmailHtmlCard.tsx     # 邮件预览卡片
+│   └── LoadingSpinner.tsx    # 加载动画
 └── lib/
+    ├── openai.ts             # AI 调用封装与提示词
     ├── templates.ts          # 各渠道模板生成逻辑
-    ├── types.ts              # 类型定义
-    └── openai.ts             # AI 调用封装
+    └── types.ts              # 类型定义
 ```

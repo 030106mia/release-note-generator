@@ -46,34 +46,47 @@ export interface ParsedReleaseNotes {
 }
 
 export interface GeneratedReleaseNotes {
-  discordCN: string;
   discordEN: string;
+  discordTC: string;
   slack: string;
   officialDesktop: string;
   officialIOS: string;
   officialAndroid: string;
-  emailHtml: string;
 }
 
-// Email highlight item structure
-export interface EmailHighlightItem {
-  platform: 'all' | 'mobile' | 'desktop';
+// Discord highlight item structure
+export interface DiscordHighlightItem {
   emoji: string;
-  content: string[];  // Array of items - formatting handled by code
+  titleEN: string;
+  titleTC: string;
+  descEN: string;
+  descTC: string;
 }
 
-export interface EmailHighlights {
-  highlights: EmailHighlightItem[];
+// Slack highlight item structures
+export interface SlackCoreHighlight {
+  title: string;
+  desc: string;
 }
 
-export type TemplateType = 
-  | 'discordCN' 
-  | 'discordEN' 
-  | 'slack' 
-  | 'officialDesktop' 
+export interface SlackPlatformHighlight {
+  platform: string;
+  version: string;
+  items: string[];
+}
+
+export interface SlackHighlights {
+  coreHighlights: SlackCoreHighlight[];
+  platformHighlights: SlackPlatformHighlight[];
+}
+
+export type TemplateType =
+  | 'discordEN'
+  | 'discordTC'
+  | 'slack'
+  | 'officialDesktop'
   | 'officialIOS'
-  | 'officialAndroid'
-  | 'emailHtml';
+  | 'officialAndroid';
 
 export interface TemplateConfig {
   id: TemplateType;
@@ -81,7 +94,7 @@ export interface TemplateConfig {
   description: string;
 }
 
-export type ChannelType = 'discord' | 'slack' | 'official' | 'email';
+export type ChannelType = 'discord' | 'slack' | 'official';
 
 export interface ChannelConfig {
   id: ChannelType;
@@ -91,35 +104,6 @@ export interface ChannelConfig {
 }
 
 export const CHANNEL_CONFIGS: ChannelConfig[] = [
-  {
-    id: 'discord',
-    name: 'Discord',
-    icon: 'discord',
-    templates: [
-      {
-        id: 'discordCN',
-        name: 'Chinese',
-        description: 'iOS + Desktop'
-      },
-      {
-        id: 'discordEN',
-        name: 'English',
-        description: 'iOS + Desktop'
-      }
-    ]
-  },
-  {
-    id: 'slack',
-    name: 'Slack',
-    icon: 'slack',
-    templates: [
-      {
-        id: 'slack',
-        name: 'Slack',
-        description: 'iOS + Desktop, Chinese'
-      }
-    ]
-  },
   {
     id: 'official',
     name: 'Official',
@@ -143,49 +127,33 @@ export const CHANNEL_CONFIGS: ChannelConfig[] = [
     ]
   },
   {
-    id: 'email',
-    name: 'Email',
-    icon: 'email',
+    id: 'discord',
+    name: 'Discord',
+    icon: 'discord',
     templates: [
       {
-        id: 'emailHtml',
-        name: 'HTML Newsletter',
-        description: 'Weekly update email'
+        id: 'discordEN',
+        name: 'English',
+        description: 'Weekly highlights'
+      },
+      {
+        id: 'discordTC',
+        name: '繁體中文',
+        description: 'Weekly highlights'
       }
     ]
-  }
-];
-
-// Keep for backward compatibility
-export const TEMPLATE_CONFIGS: TemplateConfig[] = [
-  {
-    id: 'discordCN',
-    name: 'Discord Chinese',
-    description: 'iOS + Android + Desktop, Chinese'
-  },
-  {
-    id: 'discordEN',
-    name: 'Discord English',
-    description: 'iOS + Android + Desktop, English'
   },
   {
     id: 'slack',
     name: 'Slack',
-    description: 'iOS + Android + Desktop, Chinese'
+    icon: 'slack',
+    templates: [
+      {
+        id: 'slack',
+        name: 'Slack',
+        description: 'iOS + Desktop, Chinese'
+      }
+    ]
   },
-  {
-    id: 'officialDesktop',
-    name: 'Official Desktop',
-    description: 'Mac/Desktop only, English'
-  },
-  {
-    id: 'officialIOS',
-    name: 'Official iOS',
-    description: 'iOS only, English'
-  },
-  {
-    id: 'officialAndroid',
-    name: 'Official Android',
-    description: 'Android only, English'
-  }
 ];
+

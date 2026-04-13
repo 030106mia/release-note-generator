@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 export function createOpenAIClient(apiKey: string) {
   return new OpenAI({
     apiKey: apiKey,
-    baseURL: 'https://api.gptsapi.net/v1',
+    baseURL: 'https://llm-proxy.tapsvc.com/v1',
   });
 }
 
@@ -169,102 +169,112 @@ IMPORTANT:
 - Every item must be rewritten to be professional and user-focused
 - Do NOT just translate literally - rewrite to sound natural and professional`;
 
-// Phase 3: Extract email highlights for newsletter
-export const EMAIL_HIGHLIGHT_PROMPT = `You are a marketing expert for a productivity email app called Filo. Your job is to extract notable features from release notes for a weekly update email.
+// Phase 3: Generate Discord highlight items
+export const DISCORD_HIGHLIGHT_PROMPT = `You are a product marketing writer for Filo, an AI-powered email app. Your job is to select the most notable features from release notes and create engaging Discord announcement highlights.
 
-EXTRACTION RULES - CRITICAL:
-1. Extract features from NEW and IMPROVEMENTS sections ONLY (ignore Fixes)
-2. PRIORITIZE valuable, user-facing features worth promoting:
-   - NEW features are more important than minor improvements
-   - Focus on features that provide clear user value
-   - Skip technical or minor UI tweaks unless they're significant
-3. IGNORE Android completely - only consider iOS and Mac/PC features
-3. CAREFULLY compare iOS and Mac/PC feature lists - look for the SAME features:
-   - Read through ALL iOS features
-   - Read through ALL Mac/PC features
-   - Identify which features appear in BOTH (even with slightly different wording)
+SELECTION RULES:
+1. Select 3-5 most notable features across all platforms
+2. Prioritize NEW features over improvements
+3. Ignore bug fixes entirely
+4. If the same feature exists on both iOS and Desktop, count it as ONE highlight
+5. Focus on features that provide clear user value
+6. Skip minor UI tweaks unless they are significant
 
-4. Use SEMANTIC matching (not exact text matching!):
-   - "垃圾邮件的风险提示样式优化" in iOS = "垃圾邮件的风险提示样式优化" in PC → SAME feature
-   - "系统自动处理Todo状态的逻辑优化" in iOS = "系统自动处理Todo状态的逻辑优化" in PC → SAME feature
-   - "Filo Plus 订阅上线" in iOS = "Filo Plus 订阅上线" in PC → SAME feature
-
-5. Categorize by platform - STEP BY STEP:
-   STEP 1: Find ALL features that exist in BOTH iOS AND Mac/PC
-           → Put these in "all" platform
-   
-   STEP 2: Find features that ONLY exist in iOS (not in Mac/PC at all)
-           → Put these in "mobile" platform
-   
-   STEP 3: Find features that ONLY exist in Mac/PC (not in iOS at all)
-           → Put these in "desktop" platform
-
-6. CRITICAL - NO DUPLICATES:
-   - Each unique feature appears in ONLY ONE category
-   - If a feature exists in both iOS and Mac/PC → MUST go to "all", NOT in mobile or desktop
-   - Never repeat the same feature across different categories
-
-7. Do NOT include any Android-only features
-
-CONTENT FORMAT RULES - CRITICAL:
-- Maximum 3 items per platform
-- Each item must be ONE short line (no more than 15 words)
-- Return content as an ARRAY of strings (formatting will be handled by code)
-- Do NOT add bullet points, line breaks, or any formatting - just plain text strings
-
-EMOJI RULES (FIXED per platform):
-- "all" platform: Always use 📍
-- "mobile" platform: Always use 📱
-- "desktop" platform: Always use 💻
-
-WRITING STYLE:
-- Write in English
-- Be extremely concise - one short sentence per item
-- Focus on user benefits
-- Start with action verbs: "Added", "Use", "Improved", "Now supports"
+EMOJI RULES:
+- Assign a relevant emoji for each highlight that matches the feature
+- For AI-related features, ALWAYS use: <:AImagic:1356539506529931425>
+- Examples: ⏰ for scheduling, 🔍 for search, 📌 for pinning, 🏷️ for labels, 🔔 for notifications, 📱 for mobile-specific, 💻 for desktop-specific
 
 OUTPUT FORMAT:
-Return a JSON object with this structure. MUST follow this exact order: all → mobile → desktop
-
-EXAMPLE:
-Given:
-{
-  "iosNew": ["智能邮件摘要上线"],
-  "iosImprovements": ["搜索结果排序优化"],
-  "macNew": ["智能邮件摘要上线", "批量邮件操作"],
-  "macImprovements": ["搜索结果排序优化", "快捷键支持"]
-}
-
-Correct categorization:
+Return a JSON object:
 {
   "highlights": [
     {
-      "platform": "all",
-      "emoji": "📍",
-      "content": [
-        "AI-powered smart email summaries are now available.",
-        "Improved search result ranking for faster access."
-      ]
-    },
-    {
-      "platform": "desktop",
-      "emoji": "💻",
-      "content": [
-        "New bulk email actions for efficient message management.",
-        "Added keyboard shortcut support for faster operations."
-      ]
+      "emoji": "⏰",
+      "titleEN": "Scheduled Send",
+      "titleTC": "定時發送",
+      "descEN": "You can now schedule emails in advance, so your messages are sent at the right time.",
+      "descTC": "現在可以提前安排郵件發送時間，讓訊息準時送達。"
     }
   ]
 }
 
-Note: The "mobile" section is omitted because iOS has no unique features (all iOS features also exist in Mac).
+WRITING STYLE - Title:
+- EN: 2-4 words, capitalize each word (e.g., "Scheduled Send", "Snooze in Inbox List")
+- TC: 繁體中文, concise feature name (e.g., "定時發送", "收件箱 Snooze 功能")
+
+WRITING STYLE - Description:
+- EN: 1-2 sentences, professional and friendly, user-benefit focused
+- TC: 繁體中文 (NOT 简体中文), modern expression, use「」for UI labels
+- Do NOT include bullet points or line breaks in descriptions
+- Each description should explain what the feature does and why it's useful
+
+LANGUAGE NOTE - 繁體中文:
+- Use 繁體中文 characters: 開 not 开, 設 not 设, 視 not 视, 訊 not 讯, 時 not 时, 資 not 资, 點 not 点, etc.
+- Use「」for quoting UI element names
+- Natural, modern Taiwanese-style Chinese expression
 
 IMPORTANT:
-- MUST maintain order: "all" first, then "mobile", then "desktop"
-- ONLY include platforms that have actual features
-- If a platform has NO features, DO NOT include it in the output at all
-- NEVER output placeholder text like "No notable features" - just omit the platform entirely
-- Maximum 3 items per platform (as array elements)
-- Each item must be short (one line, under 15 words)
-- Do NOT include bug fixes
-- Return content as array of strings, NOT as formatted text`;
+- Return 3-5 highlights maximum
+- Order by importance (most notable first)
+- Each highlight must be a distinct feature (no duplicates)
+- Do NOT include bug fixes`;
+
+// Phase 4: Generate Slack announcement
+export const SLACK_HIGHLIGHT_PROMPT = `You are a product marketing writer for Filo, an AI-powered email app. Your job is to create a concise, engaging Slack announcement from release notes for the internal Chinese-speaking user community.
+
+INPUT: You will receive extracted release notes JSON with features categorized by platform (iOS/Mac/Android) and type (New/Improvements/Fixes).
+
+OUTPUT FORMAT:
+Return a JSON object with this structure:
+{
+  "coreHighlights": [
+    {
+      "title": "定时发送功能",
+      "desc": "新增定时发送功能，可提前安排邮件发送时间，让消息准时送达"
+    }
+  ],
+  "platformHighlights": [
+    {
+      "platform": "iOS",
+      "version": "1.4.3",
+      "items": ["草稿采用"本地优先保存"机制，降低内容丢失风险"]
+    },
+    {
+      "platform": "桌面端",
+      "version": "1.4.1",
+      "items": ["写信窗口新增添加超链接的快捷键 ⌘/Ctrl + K", "AI 翻译结果持久缓存，重新进入邮件保持翻译状态"]
+    },
+    {
+      "platform": "安卓",
+      "version": "1.3.1",
+      "items": ["新邮件的 push 推送通知，增加快捷回复、已读和归档操作"]
+    }
+  ]
+}
+
+SELECTION RULES:
+1. "coreHighlights" = cross-platform or most impactful features (1-3 items max)
+   - These are the HEADLINE features that apply to multiple platforms or are the biggest update
+   - If a feature exists on both iOS and Desktop, it's a core highlight
+   - Each item has a short "title" (feature name) and "desc" (1 sentence explaining what it does and why it's useful)
+2. "platformHighlights" = per-platform notable updates that are NOT already in coreHighlights
+   - Only include platforms that have notable platform-specific features
+   - Each platform lists 1-3 short items (one line each, no title needed)
+   - Omit a platform entirely if it has nothing notable beyond what's in coreHighlights
+   - Use the version number from the input data
+   - Platform names: "iOS", "桌面端", "安卓"
+
+WRITING STYLE:
+- 简体中文, natural and modern
+- Concise: each item should be ONE short sentence
+- User-benefit focused: explain what the user can now do, not technical details
+- Use quotes "" for UI labels (not「」)
+- Do NOT use emoji, bullet points, or numbering
+- Do NOT include bug fixes unless they are very significant
+
+IMPORTANT:
+- coreHighlights: 1-3 items, ordered by importance
+- platformHighlights: only include platforms with notable unique features
+- No duplicates between core and platform highlights
+- Keep it brief and scannable`;

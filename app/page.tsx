@@ -3,12 +3,10 @@
 import { useState } from 'react';
 import InputSection from '@/components/InputSection';
 import OutputCard from '@/components/OutputCard';
-import EmailHtmlCard from '@/components/EmailHtmlCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { GeneratedReleaseNotes, CHANNEL_CONFIGS, ChannelType, ParsedReleaseNotes } from '@/lib/types';
+import { GeneratedReleaseNotes, CHANNEL_CONFIGS, ChannelType } from '@/lib/types';
 
-// Filter out email from channel configs for the tabs (email has its own section)
-const RELEASE_CHANNEL_CONFIGS = CHANNEL_CONFIGS.filter(c => c.id !== 'email');
+const RELEASE_CHANNEL_CONFIGS = CHANNEL_CONFIGS;
 
 // Channel Icons
 const ChannelIcon = ({ type, className }: { type: string; className?: string }) => {
@@ -31,12 +29,6 @@ const ChannelIcon = ({ type, className }: { type: string; className?: string }) 
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
         </svg>
       );
-    case 'email':
-      return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-        </svg>
-      );
     default:
       return null;
   }
@@ -44,19 +36,13 @@ const ChannelIcon = ({ type, className }: { type: string; className?: string }) 
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
   const [generatedNotes, setGeneratedNotes] = useState<GeneratedReleaseNotes | null>(null);
-  const [parsedData, setParsedData] = useState<ParsedReleaseNotes | null>(null);
-  const [emailHtml, setEmailHtml] = useState<string>('');
-  const [activeChannel, setActiveChannel] = useState<ChannelType>('discord');
+  const [activeChannel, setActiveChannel] = useState<ChannelType>('official');
 
   const handleGenerate = async (rawText: string) => {
     setIsLoading(true);
     setError(null);
-    setEmailHtml(''); // Reset email when regenerating
-    setEmailError(null);
 
     try {
       const response = await fetch('/api/generate', {
@@ -74,7 +60,6 @@ export default function Home() {
       }
 
       setGeneratedNotes(data.generated);
-      setParsedData(data.parsed);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -82,67 +67,24 @@ export default function Home() {
     }
   };
 
-  const handleGenerateEmail = async () => {
-    if (!parsedData) return;
-    
-    setIsEmailLoading(true);
-    setEmailError(null);
-
-    try {
-      const response = await fetch('/api/generate-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ parsedData }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Email generation failed');
-      }
-
-      setEmailHtml(data.emailHtml);
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setIsEmailLoading(false);
-    }
-  };
-
-  const handleDownloadHtml = () => {
-    if (!emailHtml) return;
-    
-    const blob = new Blob([emailHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `release-notes-${new Date().toISOString().split('T')[0]}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const activeChannelConfig = RELEASE_CHANNEL_CONFIGS.find(c => c.id === activeChannel);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* Background pattern */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-zinc-950 to-zinc-950 pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-900/20 via-zinc-950 to-zinc-950 pointer-events-none" />
       <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzI3MjcyYSIgc3Ryb2tlLXdpZHRoPSIwLjUiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30 pointer-events-none" />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <header className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-sm font-medium mb-4">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             AI Powered
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-pink-200 via-pink-400 to-rose-400 bg-clip-text text-transparent mb-4">
             Release Notes Generator
           </h1>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
@@ -155,7 +97,7 @@ export default function Home() {
           <div className="space-y-6">
             <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-6">
               <h2 className="text-xl font-semibold text-zinc-100 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Input Raw Text
@@ -187,7 +129,7 @@ export default function Home() {
           {/* Output Section */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Generated Results
@@ -203,7 +145,7 @@ export default function Home() {
                       onClick={() => setActiveChannel(channel.id)}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         activeChannel === channel.id
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
                           : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                       }`}
                     >
@@ -225,71 +167,6 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* Email Newsletter Section */}
-                <div className="mt-8 pt-6 border-t border-zinc-800">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                      <ChannelIcon type="email" className="w-5 h-5 text-amber-500" />
-                      Email Newsletter
-                    </h3>
-                    <div className="flex gap-2">
-                      {emailHtml && (
-                        <button
-                          onClick={handleDownloadHtml}
-                          className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-all flex items-center gap-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download HTML
-                        </button>
-                      )}
-                      <button
-                        onClick={handleGenerateEmail}
-                        disabled={isEmailLoading}
-                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 font-semibold rounded-lg text-sm hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                      >
-                        {isEmailLoading ? (
-                          <>
-                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            {emailHtml ? 'Regenerate Email' : 'Generate Email'}
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Email Error */}
-                  {emailError && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 flex items-start gap-2">
-                      <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-sm text-red-400">{emailError}</p>
-                    </div>
-                  )}
-
-                  {/* Email Content */}
-                  {emailHtml ? (
-                    <EmailHtmlCard content={emailHtml} />
-                  ) : (
-                    <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-xl p-8 text-center">
-                      <ChannelIcon type="email" className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-                      <p className="text-zinc-500 text-sm">Click &quot;Generate Email&quot; to create a newsletter HTML</p>
-                      <p className="text-zinc-600 text-xs mt-1">AI will select 3-5 highlights for the email</p>
-                    </div>
-                  )}
-                </div>
               </div>
             ) : (
               <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-12 text-center">
@@ -305,7 +182,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="mt-16 text-center text-zinc-600 text-sm">
-          <p>Powered by OpenAI GPT-4o · Built with Next.js</p>
+          <p>Powered by AI · Built with Next.js</p>
         </footer>
       </div>
     </main>

@@ -10,13 +10,6 @@ interface InputSectionProps {
 export default function InputSection({ onGenerate, isLoading }: InputSectionProps) {
   const [rawText, setRawText] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (rawText.trim()) {
-      onGenerate(rawText);
-    }
-  };
-
   const exampleText = `iOS 1.3.0       Mac 1.2.7
 New
 【多端】
@@ -39,27 +32,25 @@ Fixes
 【Mac】
 - 链接内容不能填入草稿的问题修复`;
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rawText.trim()) {
+      onGenerate(rawText);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label htmlFor="rawText" className="block text-sm font-medium text-zinc-300">
-            Raw Release Notes
-          </label>
-          <button
-            type="button"
-            onClick={() => setRawText(exampleText)}
-            className="text-xs text-amber-500 hover:text-amber-400 transition-colors"
-          >
-            Load Example
-          </button>
-        </div>
+        <label htmlFor="rawText" className="block text-sm font-medium text-zinc-300 mb-2">
+          Raw Release Notes
+        </label>
         <textarea
           id="rawText"
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           placeholder="Paste your raw release notes here...&#10;&#10;Example format:&#10;iOS 1.3.0       Mac 1.2.7&#10;New&#10;【多端】&#10;- Feature description...&#10;【iOS】&#10;- iOS specific feature..."
-          className="w-full h-64 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-600 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
+          className="w-full h-64 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-600 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all"
           disabled={isLoading}
         />
       </div>
@@ -67,7 +58,7 @@ Fixes
       <button
         type="submit"
         disabled={isLoading || !rawText.trim()}
-        className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 font-semibold rounded-xl hover:from-amber-400 hover:to-orange-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
+        className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:from-pink-400 hover:to-rose-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/30"
       >
         {isLoading ? 'Generating...' : 'Generate Release Notes'}
       </button>

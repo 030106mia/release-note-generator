@@ -22,7 +22,7 @@ export default function OutputCard({ title, description, content }: OutputCardPr
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all hover:border-zinc-700 hover:shadow-lg hover:shadow-amber-500/5">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all hover:border-zinc-700 hover:shadow-lg hover:shadow-pink-500/5">
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-zinc-800">
         <div>
           <h3 className="font-semibold text-zinc-100">{title}</h3>
@@ -33,7 +33,7 @@ export default function OutputCard({ title, description, content }: OutputCardPr
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
             copied
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'
+              : 'bg-pink-500/10 text-pink-400 border border-pink-500/30 hover:bg-pink-500/20'
           }`}
         >
           {copied ? (

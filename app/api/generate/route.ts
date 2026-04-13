@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOpenAIClient, EXTRACTION_PROMPT, POLISH_PROMPT } from '@/lib/openai';
+import { createOpenAIClient, EXTRACTION_PROMPT, POLISH_PROMPT, DISCORD_HIGHLIGHT_PROMPT, SLACK_HIGHLIGHT_PROMPT } from '@/lib/openai';
 import { generateAllTemplates } from '@/lib/templates';
-import { ExtractedReleaseNotes, ParsedReleaseNotes } from '@/lib/types';
+import { ExtractedReleaseNotes, ParsedReleaseNotes, DiscordHighlightItem, SlackHighlights } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from environment variable
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY_OVERRIDE || process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     console.log('Phase 1: Extracting and categorizing content...');
     
     const extractionResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.4',
       messages: [
         {
           role: 'system',
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     console.log('Phase 2: Polishing and translating content...');
     
     const polishResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.4',
       messages: [
         {
           role: 'system',
@@ -162,9 +162,82 @@ export async function POST(request: NextRequest) {
     console.log('Phase 2 completed. Final data structure validated.');
 
     // ============================================
-    // Phase 3: Generate all templates
+    // Phase 3: Generate Discord highlights
     // ============================================
-    const generatedNotes = generateAllTemplates(parsedData);
+    console.log('Phase 3: Generating Discord highlights...');
+
+    const discordResponse = await openai.chat.completions.create({
+      model: 'gpt-5.4',
+      messages: [
+        {
+          role: 'system',
+          content: DISCORD_HIGHLIGHT_PROMPT,
+        },
+        {
+          role: 'user',
+          content: `Select the most notable features from these release notes and create Discord announcement highlights:\n\n${JSON.stringify(extractedData, null, 2)}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.5,
+    });
+
+    const discordContent = discordResponse.choices[0]?.message?.content;
+    let discordHighlights: DiscordHighlightItem[] = [];
+
+    if (discordContent) {
+      try {
+        const parsed = JSON.parse(discordContent);
+        discordHighlights = parsed.highlights || [];
+      } catch {
+        console.warn('Warning: Discord highlights parsing failed, using empty array');
+      }
+    }
+
+    console.log(`Phase 3 completed. ${discordHighlights.length} highlights generated.`);
+
+    // ============================================
+    // Phase 4: Generate Slack highlights
+    // ============================================
+    console.log('Phase 4: Generating Slack highlights...');
+
+    const slackResponse = await openai.chat.completions.create({
+      model: 'gpt-5.4',
+      messages: [
+        {
+          role: 'system',
+          content: SLACK_HIGHLIGHT_PROMPT,
+        },
+        {
+          role: 'user',
+          content: `Create a Slack announcement from these release notes:\n\n${JSON.stringify(extractedData, null, 2)}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.5,
+    });
+
+    const slackContent = slackResponse.choices[0]?.message?.content;
+    let slackHighlights: SlackHighlights = { coreHighlights: [], platformHighlights: [] };
+
+    if (slackContent) {
+      try {
+        const parsed = JSON.parse(slackContent);
+        slackHighlights = {
+          coreHighlights: parsed.coreHighlights || [],
+          platformHighlights: parsed.platformHighlights || [],
+        };
+      } catch {
+        console.warn('Warning: Slack highlights parsing failed, using empty');
+      }
+    }
+
+    console.log(`Phase 4 completed. ${slackHighlights.coreHighlights.length} core + ${slackHighlights.platformHighlights.length} platform highlights.`);
+
+    // ============================================
+    // Phase 5: Generate all templates
+    // ============================================
+    const generatedNotes = generateAllTemplates(parsedData, discordHighlights, slackHighlights);
 
     return NextResponse.json({
       success: true,

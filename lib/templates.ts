@@ -1,19 +1,78 @@
-import { ParsedReleaseNotes, GeneratedReleaseNotes, ReleaseNoteItem, DiscordHighlightItem, SlackHighlights } from './types';
+import { ParsedReleaseNotes, GeneratedReleaseNotes, ReleaseNoteItem, DiscordHighlightItem, SlackHighlights, AndroidStoreContent, MultiLangContent } from './types';
 
-function formatItems(items: ReleaseNoteItem[], lang: 'cn' | 'en', prefix: string = '> '): string {
+type Lang = 'cn' | 'en' | 'tc' | 'ja';
+
+function formatItems(items: ReleaseNoteItem[], lang: Lang, prefix: string = '> '): string {
   if (items.length === 0) return '';
   return items.map((item, i) => `${prefix}${i + 1}. ${item[lang]}`).join('\n');
 }
 
-function formatItemsSimple(items: ReleaseNoteItem[], lang: 'cn' | 'en'): string {
+function formatItemsSimple(items: ReleaseNoteItem[], lang: Lang): string {
   if (items.length === 0) return '';
   return items.map((item, i) => `> ${i + 1}. ${item[lang]}`).join('\n');
 }
 
-function formatItemsPlain(items: ReleaseNoteItem[], lang: 'cn' | 'en'): string {
+function formatItemsDash(items: ReleaseNoteItem[], lang: Lang): string {
   if (items.length === 0) return '';
-  return items.map((item, i) => `${i + 1}. ${item[lang]}`).join('\n');
+  return items.map(item => `- ${item[lang]}`).join('\n');
 }
+
+// ============================================
+// App Store Templates
+// ============================================
+
+export function generateAppStoreIOS(data: ParsedReleaseNotes): MultiLangContent {
+  const buildLang = (lang: Lang, headers: { new: string; improvements: string; fixes: string }, feedback: string): string => {
+    const parts: string[] = [];
+    if (lang === 'en') parts.push(data.iosVersion);
+    if (data.iosNew.length > 0) parts.push(`${headers.new}\n${formatItemsDash(data.iosNew, lang)}`);
+    if (data.iosImprovements.length > 0) parts.push(`${headers.improvements}\n${formatItemsDash(data.iosImprovements, lang)}`);
+    if (data.iosFixes.length > 0) parts.push(`${headers.fixes}\n${formatItemsDash(data.iosFixes, lang)}`);
+    parts.push(feedback);
+    return parts.join('\n');
+  };
+
+  return {
+    en: buildLang('en', { new: 'New Features', improvements: 'Improvements', fixes: 'Bug Fixes' }, 'We welcome any feedback! You can join our Discord community or email us at support@filomail.com.'),
+    cn: buildLang('cn', { new: '【新功能】', improvements: '【优化】', fixes: '【问题修复】' }, '欢迎提供任何反馈！您可以加入我们的Discord用户群或发送邮件至 support@filomail.com。'),
+    tc: buildLang('tc', { new: '【新功能】', improvements: '【優化】', fixes: '【問題修復】' }, '歡迎提供任何回饋！您可以加入我們的 Discord 使用者社群或寄送郵件至 support@filomail.com。'),
+    ja: buildLang('ja', { new: '新機能', improvements: '改善', fixes: '不具合修正' }, 'フィードバックをお待ちしています！Discordコミュニティに参加するか、support@filomail.com までメールでご連絡ください。'),
+  };
+}
+
+export function generateAppStoreDesktop(data: ParsedReleaseNotes): MultiLangContent {
+  const buildLang = (lang: Lang, headers: { new: string; improvements: string; fixes: string }, feedback: string): string => {
+    const parts: string[] = [];
+    if (lang === 'en') parts.push(data.macVersion);
+    if (data.macNew.length > 0) parts.push(`${headers.new}\n${formatItemsDash(data.macNew, lang)}`);
+    if (data.macImprovements.length > 0) parts.push(`${headers.improvements}\n${formatItemsDash(data.macImprovements, lang)}`);
+    if (data.macFixes.length > 0) parts.push(`${headers.fixes}\n${formatItemsDash(data.macFixes, lang)}`);
+    parts.push(feedback);
+    return parts.join('\n');
+  };
+
+  return {
+    en: buildLang('en', { new: "What's New", improvements: 'Improvements', fixes: 'Bug Fixes' }, 'We welcome any feedback! Join our Discord community or email us at support@filomail.com.'),
+    cn: buildLang('cn', { new: '【新功能】', improvements: '【优化】', fixes: '【问题修复】' }, '欢迎提供任何反馈！您可以加入我们的 Discord 用户群或发送邮件至 support@filomail.com。'),
+    tc: buildLang('tc', { new: '【新功能】', improvements: '【優化】', fixes: '【問題修復】' }, '歡迎提供任何回饋！您可以加入我們的 Discord 用戶群，或寄送電子郵件至 support@filomail.com。'),
+    ja: buildLang('ja', { new: '新機能', improvements: '改善', fixes: '不具合修正' }, 'フィードバックをぜひお寄せください！Discordコミュニティへの参加、または support@filomail.com までメールでご連絡いただけます。'),
+  };
+}
+
+export function generateAppStoreAndroid(androidStore: AndroidStoreContent): string {
+  const localeOrder = ['zh-CN', 'zh-TW', 'en-US', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE', 'it-IT', 'es-ES', 'pt-BR', 'ru-RU', 'th', 'uk', 'hi'];
+
+  return localeOrder.map(locale => {
+    const data = androidStore[locale];
+    if (!data) return '';
+    const items = data.items.map(item => `- ${item}`).join('\n');
+    return `<${locale}>\n${items}\n\n${data.feedback}\n\n</${locale}>`;
+  }).filter(Boolean).join('\n\n');
+}
+
+// ============================================
+// Discord Templates
+// ============================================
 
 export function generateDiscordEN(highlights: DiscordHighlightItem[]): string {
   const items = highlights.map(h =>
@@ -31,13 +90,15 @@ export function generateDiscordTC(highlights: DiscordHighlightItem[]): string {
   return `<@&1356906492363673722> <@&1429662407390793790>\n😼 本週 Filo 主要更新了以下內容：\n\n${items}\n\n各客戶端其他的變更內容，都整理在官網更新日誌裡\n\n歡迎在 [#feedback] 頻道回饋使用體驗～`;
 }
 
+// ============================================
+// Slack Template
+// ============================================
+
 export function generateSlack(highlights: SlackHighlights): string {
-  // Core highlights section
   const coreSection = highlights.coreHighlights.map(h =>
     `*${h.title}*\n${h.desc}`
   ).join('\n\n');
 
-  // Platform highlights section
   const platformSection = highlights.platformHighlights.map(p => {
     const items = p.items.join('\n');
     return `*${p.platform}（${p.version}）*\n${items}`;
@@ -50,6 +111,10 @@ export function generateSlack(highlights: SlackHighlights): string {
 
   return `:filomail-icon-v2: Filo 本次主要更新以下功能：\n\n${body}\n\n各个客户端其他的优化和修复内容，我们都整理在官网更新日志 里啦\n\n欢迎在群里反馈更多使用体验 ~`;
 }
+
+// ============================================
+// Official Templates (existing, unchanged)
+// ============================================
 
 export function generateOfficialDesktop(data: ParsedReleaseNotes): string {
   const newSection = data.macNew.length > 0
@@ -90,13 +155,25 @@ export function generateOfficialAndroid(data: ParsedReleaseNotes): string {
 ${newSection}${improvementsSection}${fixesSection}`.trim();
 }
 
-export function generateAllTemplates(data: ParsedReleaseNotes, discordHighlights: DiscordHighlightItem[], slackHighlights: SlackHighlights): GeneratedReleaseNotes {
+// ============================================
+// Generate All
+// ============================================
+
+export function generateAllTemplates(
+  data: ParsedReleaseNotes,
+  discordHighlights: DiscordHighlightItem[],
+  slackHighlights: SlackHighlights,
+  androidStore: AndroidStoreContent
+): GeneratedReleaseNotes {
   return {
-    discordEN: generateDiscordEN(discordHighlights),
-    discordTC: generateDiscordTC(discordHighlights),
-    slack: generateSlack(slackHighlights),
+    appstoreIOS: generateAppStoreIOS(data),
+    appstoreDesktop: generateAppStoreDesktop(data),
+    appstoreAndroid: generateAppStoreAndroid(androidStore),
     officialDesktop: generateOfficialDesktop(data),
     officialIOS: generateOfficialIOS(data),
     officialAndroid: generateOfficialAndroid(data),
+    discordEN: generateDiscordEN(discordHighlights),
+    discordTC: generateDiscordTC(discordHighlights),
+    slack: generateSlack(slackHighlights),
   };
 }

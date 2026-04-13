@@ -5,9 +5,10 @@ import { useState } from 'react';
 interface InputSectionProps {
   onGenerate: (rawText: string) => void;
   isLoading: boolean;
+  buttonText?: string;
 }
 
-export default function InputSection({ onGenerate, isLoading }: InputSectionProps) {
+export default function InputSection({ onGenerate, isLoading, buttonText }: InputSectionProps) {
   const [rawText, setRawText] = useState('');
 
   const exampleText = `iOS 1.3.0       Mac 1.2.7
@@ -60,7 +61,7 @@ Fixes
         disabled={isLoading || !rawText.trim()}
         className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:from-pink-400 hover:to-rose-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-pink-500/20 hover:shadow-pink-500/30"
       >
-        {isLoading ? 'Generating...' : 'Generate Release Notes'}
+        {buttonText || (isLoading ? 'Generating...' : 'Generate Release Notes')}
       </button>
     </form>
   );

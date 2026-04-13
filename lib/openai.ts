@@ -148,26 +148,43 @@ INPUT FORMAT:
   "androidFixes": ["原始文本", ...]
 }
 
-OUTPUT FORMAT (same structure but with polished content):
+WRITING STYLE - 繁體中文 (tc):
+- Use 繁體中文 characters: 開 not 开, 設 not 设, 視 not 视, 訊 not 讯, 時 not 时, 資 not 资, 點 not 点, 問題 not 问题, 優化 not 优化, 修復 not 修复
+- Use「」for quoting UI element names
+- Natural, modern Taiwanese-style Chinese expression
+- For "New": Use "新增", "現在支援"
+- For "Improvements": Use "優化了", "調整"
+- For "Fixes": Use "修復了...的問題" pattern
+
+WRITING STYLE - 日本語 (ja):
+- Professional, polite Japanese
+- For "New": Use "〜を追加しました", "〜に対応しました"
+- For "Improvements": Use "〜を最適化しました", "〜を改善しました"
+- For "Fixes": Use "〜の問題を修正しました" pattern
+- Keep technical terms in English: AI, Cc, Bcc, Todo, Filo AI, etc.
+- Natural and user-friendly tone
+
+OUTPUT FORMAT (same structure but with polished content in 4 languages):
 {
   "iosVersion": "x.x.x",
   "macVersion": "x.x.x",
   "androidVersion": "x.x.x",
-  "iosNew": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "macNew": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "androidNew": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "iosImprovements": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "macImprovements": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "androidImprovements": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "iosFixes": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "macFixes": [{"cn": "专业中文", "en": "Professional English"}, ...],
-  "androidFixes": [{"cn": "专业中文", "en": "Professional English"}, ...]
+  "iosNew": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "macNew": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "androidNew": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "iosImprovements": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "macImprovements": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "androidImprovements": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "iosFixes": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "macFixes": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...],
+  "androidFixes": [{"cn": "简体中文", "en": "English", "tc": "繁體中文", "ja": "日本語"}, ...]
 }
 
-IMPORTANT: 
+IMPORTANT:
 - The number of items in each array must remain exactly the same
 - Every item must be rewritten to be professional and user-focused
-- Do NOT just translate literally - rewrite to sound natural and professional`;
+- Do NOT just translate literally - rewrite to sound natural and professional in each language
+- All 4 language fields (cn, en, tc, ja) are REQUIRED for every item`;
 
 // Phase 3: Generate Discord highlight items
 export const DISCORD_HIGHLIGHT_PROMPT = `You are a product marketing writer for Filo, an AI-powered email app. Your job is to select the most notable features from release notes and create engaging Discord announcement highlights.
@@ -278,3 +295,48 @@ IMPORTANT:
 - platformHighlights: only include platforms with notable unique features
 - No duplicates between core and platform highlights
 - Keep it brief and scannable`;
+
+// Phase: Generate Android Play Store multi-language content
+export const ANDROID_STORE_PROMPT = `You are a professional app store listing writer. Your job is to create concise, multi-language release notes for the Google Play Store.
+
+You will receive extracted release notes for Android. Create a VERY CONCISE summary (2-5 bullet points max) suitable for the Play Store, then translate it into all required languages.
+
+CONTENT RULES:
+1. Select only the 2-5 most important changes for Android
+2. Each item should be ONE short sentence (under 20 words)
+3. Combine minor fixes into "Other stability improvements" if needed
+4. Include both new features, improvements, and significant fixes
+5. Keep it scannable and user-friendly
+
+LANGUAGES REQUIRED (13 total):
+zh-CN (简体中文), zh-TW (繁體中文), en-US (English), ja-JP (日本語), ko-KR (한국어), fr-FR (Français), de-DE (Deutsch), it-IT (Italiano), es-ES (Español), pt-BR (Português), ru-RU (Русский), th (ไทย), uk (Українська), hi (हिन्दी)
+
+FEEDBACK LINE per language:
+- zh-CN: "欢迎反馈！加入我们的 Discord 社区或发送邮件至 support@filomail.com"
+- zh-TW: "歡迎回饋！加入我們的 Discord 社群或發送郵件至 support@filomail.com"
+- en-US: "We welcome your feedback! Join our Discord community or email us at support@filomail.com"
+- ja-JP: "ご意見をお待ちしています！Discordコミュニティへの参加、または support@filomail.com までメールでご連絡ください"
+- ko-KR: "여러분의 의견을 기다립니다! Discord 커뮤니티에 참여하시거나 support@filomail.com 으로 이메일을 보내주세요"
+- fr-FR: "Nous accueillons vos retours ! Rejoignez notre communauté Discord ou envoyez-nous un e-mail à support@filomail.com"
+- de-DE: "Wir freuen uns über Ihr Feedback! Treten Sie unserer Discord-Community bei oder schreiben Sie uns an support@filomail.com"
+- it-IT: "Accogliamo con piacere i vostri feedback! Unitevi alla nostra community Discord o scriveteci a support@filomail.com"
+- es-ES: "¡Agradecemos tus comentarios! Únete a nuestra comunidad de Discord o envíanos un correo a support@filomail.com"
+- pt-BR: "Adoramos receber seu feedback! Participe da nossa comunidade no Discord ou envie um e-mail para support@filomail.com"
+- ru-RU: "Мы будем рады вашей обратной связи! Присоединяйтесь к нашему сообществу в Discord или напишите нам на support@filomail.com"
+- th: "ยินดีรับฟังความคิดเห็นของคุณ! เข้าร่วมชุมชน Discord ของเรา หรือส่งอีเมลมาที่ support@filomail.com"
+- uk: "Ми раді вашим відгукам! Приєднуйтесь до нашої спільноти в Discord або напишіть нам на support@filomail.com"
+- hi: "हम आपके सुझावों का स्वागत करते हैं! हमारे Discord समुदाय से जुड़ें या support@filomail.com पर ईमेल भेजें"
+
+OUTPUT FORMAT:
+{
+  "zh-CN": { "items": ["功能描述1", "功能描述2"], "feedback": "欢迎反馈！..." },
+  "zh-TW": { "items": ["功能描述1", "功能描述2"], "feedback": "歡迎回饋！..." },
+  "en-US": { "items": ["Feature 1", "Feature 2"], "feedback": "We welcome..." },
+  ...all 13 languages
+}
+
+IMPORTANT:
+- Each language must have the SAME number of items
+- Items should be semantically equivalent across languages (same features, translated)
+- Use the bullet dash format "- " prefix will be added by the template
+- Do NOT include the dash in the items themselves`;

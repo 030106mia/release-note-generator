@@ -1,8 +1,10 @@
 // TypeScript interfaces for Release Notes Generator
 
 export interface ReleaseNoteItem {
-  cn: string;  // Chinese version
-  en: string;  // English version
+  cn: string;  // 简体中文
+  en: string;  // English
+  tc: string;  // 繁體中文
+  ja: string;  // 日本語
 }
 
 // Phase 1: Extracted raw data (original Chinese text only)
@@ -21,37 +23,47 @@ export interface ExtractedReleaseNotes {
   androidFixes: string[];
 }
 
-// Phase 2: Polished data (with both CN and EN)
+// Phase 2: Polished data (with all 4 languages)
 export interface ParsedReleaseNotes {
   iosVersion: string;
   macVersion: string;
   androidVersion: string;
   iosBuild?: string;  // Optional build number for iOS
   androidBuild?: string;  // Optional build number for Android
-  
+
   // New features
   iosNew: ReleaseNoteItem[];
   macNew: ReleaseNoteItem[];
   androidNew: ReleaseNoteItem[];
-  
+
   // Improvements
   iosImprovements: ReleaseNoteItem[];
   macImprovements: ReleaseNoteItem[];
   androidImprovements: ReleaseNoteItem[];
-  
+
   // Bug fixes
   iosFixes: ReleaseNoteItem[];
   macFixes: ReleaseNoteItem[];
   androidFixes: ReleaseNoteItem[];
 }
 
+export interface MultiLangContent {
+  en: string;
+  cn: string;
+  tc: string;
+  ja: string;
+}
+
 export interface GeneratedReleaseNotes {
-  discordEN: string;
-  discordTC: string;
-  slack: string;
+  appstoreIOS: MultiLangContent;
+  appstoreDesktop: MultiLangContent;
+  appstoreAndroid: string;
   officialDesktop: string;
   officialIOS: string;
   officialAndroid: string;
+  discordEN: string;
+  discordTC: string;
+  slack: string;
 }
 
 // Discord highlight item structure
@@ -80,7 +92,18 @@ export interface SlackHighlights {
   platformHighlights: SlackPlatformHighlight[];
 }
 
+// Android store multi-language content
+export interface AndroidStoreContent {
+  [locale: string]: {
+    items: string[];
+    feedback: string;
+  };
+}
+
 export type TemplateType =
+  | 'appstoreIOS'
+  | 'appstoreDesktop'
+  | 'appstoreAndroid'
   | 'discordEN'
   | 'discordTC'
   | 'slack'
@@ -94,7 +117,7 @@ export interface TemplateConfig {
   description: string;
 }
 
-export type ChannelType = 'discord' | 'slack' | 'official';
+export type ChannelType = 'appstore' | 'official' | 'discord' | 'slack';
 
 export interface ChannelConfig {
   id: ChannelType;
@@ -104,6 +127,28 @@ export interface ChannelConfig {
 }
 
 export const CHANNEL_CONFIGS: ChannelConfig[] = [
+  {
+    id: 'appstore',
+    name: 'App Store',
+    icon: 'appstore',
+    templates: [
+      {
+        id: 'appstoreIOS',
+        name: 'iOS',
+        description: 'App Store, 4 languages'
+      },
+      {
+        id: 'appstoreDesktop',
+        name: 'Desktop',
+        description: 'Mac/Windows, 4 languages'
+      },
+      {
+        id: 'appstoreAndroid',
+        name: 'Android',
+        description: 'Google Play, 13 languages'
+      }
+    ]
+  },
   {
     id: 'official',
     name: 'Official',
@@ -156,4 +201,3 @@ export const CHANNEL_CONFIGS: ChannelConfig[] = [
     ]
   },
 ];
-
